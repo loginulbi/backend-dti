@@ -7,6 +7,9 @@
 *.dll
 *.so
 *.dylib
+*.gitlab-ci.yml
+*.docker-compose.yml
+*Dockerfile
 
 # Test binary, built with `go test -c`
 *.test
