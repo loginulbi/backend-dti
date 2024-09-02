@@ -2,7 +2,7 @@ package helper
 
 import (
 	"context"
-	"gocroot/model"
+	"login-service/model"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"

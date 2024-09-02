@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"gocroot/model"
+	"login-service/model"
 
 	"github.com/gofiber/fiber/v2"
 )

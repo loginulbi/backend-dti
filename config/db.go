@@ -1,8 +1,8 @@
 package config
 
 import (
-	"gocroot/helper"
-	"gocroot/model"
+	"login-service/helper"
+	"login-service/model"
 	"os"
 )
 

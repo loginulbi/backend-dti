@@ -1,7 +1,7 @@
 package config
 
 import (
-	"gocroot/helper"
+	"login-service/helper"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -12,7 +12,7 @@ var Iteung = fiber.Config{
 	Prefork:       true,
 	CaseSensitive: true,
 	StrictRouting: true,
-	ServerHeader:  "GoCroot",
+	ServerHeader:  "login-service",
 	AppName:       "Golang Change Root",
 	Network:       Net,
 }
