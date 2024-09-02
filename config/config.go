@@ -1,14 +1,14 @@
 package config
 
 import (
-	"login-service/helper"
+	"login-service/helper/at"
 	"os"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 var PrivateKey string = os.Getenv("PRKEY")
-var IPPort, Net = helper.GetAddress()
+var IPPort, Net = at.GetAddress()
 
 var Iteung = fiber.Config{
 	Prefork:       true,

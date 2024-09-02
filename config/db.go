@@ -1,7 +1,6 @@
 package config
 
 import (
-	"login-service/helper"
 	"login-service/helper/atdb"
 	"os"
 )
@@ -9,7 +8,7 @@ import (
 var MongoString string = os.Getenv("MONGOSTRING")
 
 var mongoinfo = atdb.DBInfo{
-	DBString: helper.SRVLookup(MongoString),
+	DBString: MongoString,
 	DBName:   "hris",
 }
 
