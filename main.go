@@ -1,12 +1,20 @@
 package main
 
 import (
-	"net/http"
+	"log"
 
-	"login-service/route"
+	"gocroot/config"
+
+	"github.com/gofiber/fiber/v2/middleware/cors"
+
+	"gocroot/url"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 func main() {
-	http.HandleFunc("/", route.URL)
-	http.ListenAndServe(":8080", nil)
+	site := fiber.New(config.Iteung)
+	site.Use(cors.New(config.Cors))
+	url.Web(site)
+	log.Fatal(site.Listen(config.IPPort))
 }

@@ -1,34 +1,18 @@
 package config
 
 import (
-	"log"
-	"os"
+	"gocroot/helper"
 
-	"login-service/helper/at"
-	"login-service/helper/atdb"
-	"login-service/model"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"github.com/gofiber/fiber/v2"
 )
 
-var PrivateKey string = os.Getenv("PRKEY")
+var IPPort, Net = helper.GetAddress()
 
-var IPPort, Net = at.GetAddress()
-
-var PhoneNumber string = os.Getenv("PHONENUMBER")
-
-func SetEnv() {
-	if ErrorMongoconn != nil {
-		log.Println(ErrorMongoconn.Error())
-	}
-	profile, err := atdb.GetOneDoc[model.Profile](Mongoconn, "profile", primitive.M{"phonenumber": PhoneNumber})
-	if err != nil {
-		log.Println(err)
-	}
-	if Mongoconn == nil {
-		log.Println("Failed to connect to MongoDB.")
-		return
-	}
-	PublicKeyWhatsAuth = profile.PublicKey
-	WAAPIToken = profile.Token
+var Iteung = fiber.Config{
+	Prefork:       true,
+	CaseSensitive: true,
+	StrictRouting: true,
+	ServerHeader:  "GoCroot",
+	AppName:       "Golang Change Root",
+	Network:       Net,
 }

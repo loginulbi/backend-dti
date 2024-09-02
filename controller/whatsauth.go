@@ -1,132 +1,101 @@
 package controller
 
 import (
-	"encoding/json"
-	"net/http"
-	"sync"
+	"gocroot/config"
+	"gocroot/helper"
+	"gocroot/model"
+	"strings"
 
-	"login-service/config"
-	"login-service/helper/at"
-	"login-service/helper/atdb"
-	"login-service/helper/report"
-	"login-service/helper/whatsauth"
-	"login-service/model"
-
+	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func GetHome(respw http.ResponseWriter, req *http.Request) {
-	var resp model.Response
-	resp.Response = at.GetIPaddress()
-	at.WriteJSON(respw, http.StatusOK, resp)
-}
-
-func PostInboxNomor(respw http.ResponseWriter, req *http.Request) {
-	var resp whatsauth.Response
-	var msg whatsauth.IteungMessage
-	httpstatus := http.StatusUnauthorized
-	resp.Response = "Wrong Secret"
-	waphonenumber := at.GetParam(req)
-	prof, err := whatsauth.GetAppProfile(waphonenumber, config.Mongoconn)
+func WhatsAuthReceiver(c *fiber.Ctx) error {
+	var h model.Header
+	err := c.ReqHeaderParser(&h)
 	if err != nil {
-		resp.Response = err.Error()
-		httpstatus = http.StatusServiceUnavailable
+		return err
 	}
-	if at.GetSecretFromHeader(req) == prof.Secret {
-		err := json.NewDecoder(req.Body).Decode(&msg)
-		if err != nil {
-			resp.Response = err.Error()
-		} else {
-			resp, err = whatsauth.WebHook(prof.QRKeyword, waphonenumber, config.WAAPIQRLogin, config.WAAPIMessage, msg, config.Mongoconn)
-			if err != nil {
-				resp.Response = err.Error()
-			}
-		}
-	}
-	at.WriteJSON(respw, httpstatus, resp)
-}
-
-// jalan setiap jam 3 pagi
-func GetNewToken(respw http.ResponseWriter, req *http.Request) {
 	var resp model.Response
-	httpstatus := http.StatusServiceUnavailable
-
-	var wg sync.WaitGroup
-	wg.Add(3) // Menambahkan jumlah goroutine yang akan dijalankan
-
-	// Mutex untuk mengamankan akses ke variabel resp dan httpstatus
-	var mu sync.Mutex
-	// Variabel untuk menyimpan kesalahan terakhir
-	var lastErr error
-
-	// 1. Refresh token
-	go func() {
-		defer wg.Done() // Memanggil wg.Done() setelah fungsi selesai
-		profs, err := atdb.GetAllDoc[[]model.Profile](config.Mongoconn, "profile", bson.M{})
+	if h.Secret == config.WebhookSecret {
+		var msg model.IteungMessage
+		err = c.BodyParser(&msg)
 		if err != nil {
-			mu.Lock()
-			lastErr = err
-			resp.Response = err.Error()
-			mu.Unlock()
-			return
+			return err
 		}
-		for _, prof := range profs {
-			dt := &whatsauth.WebHookInfo{
-				URL:    prof.URL,
-				Secret: prof.Secret,
-			}
-			res, err := whatsauth.RefreshToken(dt, prof.Phonenumber, config.WAAPIGetToken, config.Mongoconn)
-			if err != nil {
-				mu.Lock()
-				lastErr = err
-				resp.Response = err.Error()
-				httpstatus = http.StatusInternalServerError
-				mu.Unlock()
-				continue // Lanjutkan ke iterasi berikutnya
-			}
-			mu.Lock()
-			resp.Response = at.Jsonstr(res.ModifiedCount)
-			httpstatus = http.StatusOK
-			mu.Unlock()
+		if IsLoginRequest(msg, config.WAKeyword) { //untuk whatsauth request login
+			resp = HandlerQRLogin(msg, config.WAKeyword)
+		} else { //untuk membalas pesan masuk
+			resp = HandlerIncomingMessage(msg)
 		}
-	}()
-
-	// 2. Menjalankan fungsi RekapMeetingKemarin dalam goroutine
-	go func() {
-		defer wg.Done() // Memanggil wg.Done() setelah fungsi selesai
-		if err := report.RekapMeetingKemarin(config.Mongoconn); err != nil {
-			mu.Lock()
-			lastErr = err
-			resp.Response = err.Error()
-			httpstatus = http.StatusInternalServerError
-			mu.Unlock()
-		}
-	}()
-
-	// 3. Menjalankan fungsi RekapPagiHari dalam goroutine
-	go func() {
-		defer wg.Done() // Memanggil wg.Done() setelah fungsi selesai
-		if err := report.RekapPagiHari(config.Mongoconn); err != nil {
-			mu.Lock()
-			lastErr = err
-			resp.Response = err.Error()
-			httpstatus = http.StatusInternalServerError
-			mu.Unlock()
-		}
-	}()
-
-	wg.Wait() // Menunggu sampai semua goroutine selesai
-
-	// Menggunakan status yang benar dari kesalahan terakhir jika ada
-	if lastErr != nil {
-		at.WriteJSON(respw, httpstatus, resp)
 	} else {
-		at.WriteJSON(respw, http.StatusOK, resp)
+		resp.Response = "Secret Salah"
 	}
+	return c.Status(fiber.StatusOK).JSON(resp)
 }
 
-func NotFound(respw http.ResponseWriter, req *http.Request) {
-	var resp model.Response
-	resp.Response = "Not Found"
-	at.WriteJSON(respw, http.StatusNotFound, resp)
+func RefreshWAToken(c *fiber.Ctx) error {
+	dt := &model.WebHook{
+		URL:    config.WebhookURL,
+		Secret: config.WebhookSecret,
+	}
+	resp, err := helper.PostStructWithToken[model.User]("Token", WAAPIToken(config.WAPhoneNumber), dt, config.WAAPIGetToken)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error(), "response": resp})
+	}
+	profile := &model.Profile{
+		Phonenumber: resp.PhoneNumber,
+		Token:       resp.Token,
+	}
+	res, err := helper.ReplaceOneDoc(config.Mongoconn, "profile", bson.M{"phonenumber": resp.PhoneNumber}, profile)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error(), "result": res})
+	}
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"result": res})
+}
+
+func IsLoginRequest(msg model.IteungMessage, keyword string) bool {
+	return strings.Contains(msg.Message, keyword) && msg.From_link
+}
+
+func GetUUID(msg model.IteungMessage, keyword string) string {
+	return strings.Replace(msg.Message, keyword, "", 1)
+}
+
+func HandlerQRLogin(msg model.IteungMessage, WAKeyword string) (resp model.Response) {
+	dt := &model.WhatsauthRequest{
+		Uuid:        GetUUID(msg, WAKeyword),
+		Phonenumber: msg.Phone_number,
+		Delay:       msg.From_link_delay,
+	}
+	resp, _ = helper.PostStructWithToken[model.Response]("Token", WAAPIToken(config.WAPhoneNumber), dt, config.WAAPIQRLogin)
+	return
+}
+
+func HandlerIncomingMessage(msg model.IteungMessage) (resp model.Response) {
+	dt := &model.TextMessage{
+		To:       msg.Chat_number,
+		IsGroup:  false,
+		Messages: GetRandomReplyFromMongo(msg),
+	}
+	if msg.Chat_server == "g.us" { //jika pesan datang dari group maka balas ke group
+		dt.IsGroup = true
+	}
+	if (msg.Phone_number != "628112000279") && (msg.Phone_number != "6283131895000") { //ignore pesan datang dari iteung
+		resp, _ = helper.PostStructWithToken[model.Response]("Token", WAAPIToken(config.WAPhoneNumber), dt, config.WAAPIMessage)
+	}
+	return
+}
+
+func GetRandomReplyFromMongo(msg model.IteungMessage) string {
+	rply, _ := helper.GetRandomDoc[model.Reply](config.Mongoconn, "reply", 1)
+	replymsg := strings.ReplaceAll(rply[0].Message, "#BOTNAME#", msg.Alias_name)
+	replymsg = strings.ReplaceAll(replymsg, "\\n", "\n")
+	return replymsg
+}
+
+func WAAPIToken(phonenumber string) string {
+	filter := bson.M{"phonenumber": phonenumber}
+	apitoken, _ := helper.GetOneDoc[model.Profile](config.Mongoconn, "profile", filter)
+	return apitoken.Token
 }
