@@ -92,9 +92,10 @@ func URL(w http.ResponseWriter, r *http.Request) {
 		controller.VerifyPasswordHandler(w, r)
 	case method == "POST" && path == "/auth/resend":
 		controller.ResendPasswordHandler(w, r)
-	case method == "GET" && path == "/data/karyawan":
-		controller.GetDataKaryawan(w, r)
 	// Google Auth
+	// karyawan
+	case method == "GET" && path == "/data/karyawan":
+		controller.GetDataBio(w, r)
 	default:
 		controller.NotFound(w, r)
 	}
