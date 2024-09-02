@@ -10,7 +10,7 @@ var MongoString string = os.Getenv("MONGOSTRING")
 
 var mongoinfo = model.DBInfo{
 	DBString: helper.SRVLookup(MongoString),
-	DBName:   "iteung",
+	DBName:   "hris",
 }
 
 var Mongoconn, _ = helper.MongoConnect(mongoinfo)

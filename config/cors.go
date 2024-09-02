@@ -7,6 +7,7 @@ import (
 )
 
 var origins = []string{
+	"https://login.ulbi.ac.id",
 	"https://naskah.bukupedia.co.id",
 	"https://auth.ulbi.ac.id",
 	"https://sip.ulbi.ac.id",
