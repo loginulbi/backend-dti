@@ -15,78 +15,67 @@ import (
 	"login-service/helper/watoken"
 	"login-service/model"
 
+	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"golang.org/x/crypto/bcrypt"
 )
 
-func Auth(w http.ResponseWriter, r *http.Request) {
+func AuthUser(c *fiber.Ctx) error {
 	var resp model.Response
 	var request struct {
 		Token string `json:"token"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+	if err := c.BodyParser(&request); err != nil {
 		resp.Response = "Invalid request"
-		at.WriteJSON(w, http.StatusBadRequest, resp)
-		return
+		return c.Status(http.StatusBadRequest).JSON(resp)
 	}
 
-	// Ambil kredensial dari database
 	creds, err := atdb.GetOneDoc[auth.GoogleCredential](config.Mongoconn, "credentials", bson.M{})
 	if err != nil {
 		resp.Response = "Database Connection Problem: Unable to fetch credentials"
-		at.WriteJSON(w, http.StatusBadGateway, resp)
-		return
+		return c.Status(http.StatusBadGateway).JSON(resp)
 	}
 
-	// Verifikasi ID token menggunakan client_id
 	payload, err := auth.VerifyIDToken(request.Token, creds.ClientID)
 	if err != nil {
 		resp.Response = "Invalid token: Token verification failed"
-		at.WriteJSON(w, http.StatusUnauthorized, resp)
-		return
+		return c.Status(http.StatusUnauthorized).JSON(resp)
 	}
-
-	userInfo := model.Userdomyikado{
-		Name:                 payload.Claims["name"].(string),
+	userInfo := model.User{
+		Nama:                 payload.Claims["name"].(string),
 		Email:                payload.Claims["email"].(string),
-		GoogleProfilePicture: payload.Claims["picture"].(string),
 	}
 
-	// Simpan atau perbarui informasi pengguna di database
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	collection := config.Mongoconn.Collection("user")
 	filter := bson.M{"email": userInfo.Email}
 
-	var existingUser model.Userdomyikado
+	var existingUser model.User
 	err = collection.FindOne(ctx, filter).Decode(&existingUser)
 	if err != nil || existingUser.PhoneNumber == "" {
-		// User does not exist or exists but has no phone number, request QR scan
 		response := map[string]interface{}{
 			"message": "Please scan the QR code to provide your phone number",
 			"user":    userInfo,
 			"token":   "",
 		}
 		resp.Response = "Phone number not found"
-		at.WriteJSON(w, http.StatusUnauthorized, response)
-		return
+		return c.Status(http.StatusUnauthorized).JSON(response)
 	} else if existingUser.PhoneNumber != "" {
-		token, err := watoken.EncodeforHours(existingUser.PhoneNumber, existingUser.Name, config.PrivateKey, 18) // Generating a token for 18 hours
+		token, err := watoken.EncodeforHours(existingUser.PhoneNumber, existingUser.Nama, config.PrivateKey, 18)
 		if err != nil {
 			resp.Response = "Token generation failed"
-			at.WriteJSON(w, http.StatusInternalServerError, resp)
-			return
+			return c.Status(http.StatusInternalServerError).JSON(resp)
 		}
 		response := map[string]interface{}{
 			"message": "Authenticated successfully",
 			"user":    userInfo,
 			"token":   token,
 		}
-		at.WriteJSON(w, http.StatusOK, response)
-		return
+		return c.Status(http.StatusOK).JSON(response)
 	}
 
 	update := bson.M{
@@ -96,14 +85,12 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 	_, err = collection.UpdateOne(ctx, filter, update, opts)
 	if err != nil {
 		resp.Response = "Failed to save user info: Database update failed"
-		at.WriteJSON(w, http.StatusInternalServerError, resp)
-		return
+		return c.Status(http.StatusInternalServerError).JSON(resp)
 	}
-
 	response := map[string]interface{}{
 		"user": userInfo,
 	}
-	at.WriteJSON(w, http.StatusOK, response)
+	return c.Status(http.StatusOK).JSON(response)
 }
 
 func GeneratePasswordHandler(respw http.ResponseWriter, r *http.Request) {

@@ -50,6 +50,14 @@ type Userdomyikado struct {
 	JumlahAntrian        int                `json:"jumlahantrian,omitempty" bson:"jumlahantrian,omitempty"`
 }
 
+type User struct {
+	ID          primitive.ObjectID `bson:"_id,omitempty" json:"_id,omitempty"`
+	Nama        string             `bson:"nama,omitempty" json:"nama,omitempty"`
+	PhoneNumber string             `bson:"phone_number,omitempty" json:"phone_number,omitempty"`
+	Email       string             `bson:"email,omitempty" json:"email,omitempty"`
+	Role        string             `bson:"role,omitempty" json:"role,omitempty"`
+}
+
 type Task struct {
 	ID        primitive.ObjectID `bson:"_id,omitempty" json:"_id,omitempty"`
 	ProjectID string             `bson:"projectid" json:"projectid"`
