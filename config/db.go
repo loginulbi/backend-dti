@@ -2,15 +2,15 @@ package config
 
 import (
 	"login-service/helper"
-	"login-service/model"
+	"login-service/helper/atdb"
 	"os"
 )
 
 var MongoString string = os.Getenv("MONGOSTRING")
 
-var mongoinfo = model.DBInfo{
+var mongoinfo = atdb.DBInfo{
 	DBString: helper.SRVLookup(MongoString),
 	DBName:   "hris",
 }
 
-var Mongoconn, _ = helper.MongoConnect(mongoinfo)
+var Mongoconn, _ = atdb.MongoConnect(mongoinfo)

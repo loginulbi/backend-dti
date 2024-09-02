@@ -2,10 +2,12 @@ package config
 
 import (
 	"login-service/helper"
+	"os"
 
 	"github.com/gofiber/fiber/v2"
 )
 
+var PrivateKey string = os.Getenv("PRKEY")
 var IPPort, Net = helper.GetAddress()
 
 var Iteung = fiber.Config{

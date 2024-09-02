@@ -36,7 +36,7 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 	creds, err := atdb.GetOneDoc[auth.GoogleCredential](config.Mongoconn, "credentials", bson.M{})
 	if err != nil {
 		resp.Response = "Database Connection Problem: Unable to fetch credentials"
-		at.WriteJSONWithHeader(w, r, http.StatusBadGateway, resp, config.origins)
+		at.WriteJSON(w, http.StatusBadGateway, resp)
 		return
 	}
 
