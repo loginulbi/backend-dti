@@ -22,31 +22,29 @@ import (
 )
 
 func Auth(w http.ResponseWriter, r *http.Request) {
+	var resp model.Response
 	var request struct {
 		Token string `json:"token"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{"message": "Invalid request"})
+		resp.Response = "Invalid request"
+		at.WriteJSON(w, http.StatusBadRequest, resp)
 		return
 	}
 
 	// Ambil kredensial dari database
 	creds, err := atdb.GetOneDoc[auth.GoogleCredential](config.Mongoconn, "credentials", bson.M{})
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadGateway)
-		json.NewEncoder(w).Encode(map[string]string{"message": "Database Connection Problem: Unable to fetch credentials"})
+		resp.Response = "Database Connection Problem: Unable to fetch credentials"
+		at.WriteJSON(w, http.StatusBadGateway, resp)
 		return
 	}
 
 	// Verifikasi ID token menggunakan client_id
 	payload, err := auth.VerifyIDToken(request.Token, creds.ClientID)
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(map[string]string{"message": "Invalid token: Token verification failed"})
+		resp.Response = "Invalid token: Token verification failed"
+		at.WriteJSON(w, http.StatusUnauthorized, resp)
 		return
 	}
 
@@ -72,16 +70,14 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 			"user":    userInfo,
 			"token":   "",
 		}
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(response)
+		resp.Response = "Phone number not found"
+		at.WriteJSON(w, http.StatusUnauthorized, response)
 		return
 	} else if existingUser.PhoneNumber != "" {
 		token, err := watoken.EncodeforHours(existingUser.PhoneNumber, existingUser.Name, config.PrivateKey, 18) // Generating a token for 18 hours
 		if err != nil {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(map[string]string{"message": "Token generation failed"})
+			resp.Response = "Token generation failed"
+			at.WriteJSON(w, http.StatusInternalServerError, resp)
 			return
 		}
 		response := map[string]interface{}{
@@ -89,9 +85,7 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 			"user":    userInfo,
 			"token":   token,
 		}
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(response)
+		at.WriteJSON(w, http.StatusOK, response)
 		return
 	}
 
@@ -101,18 +95,15 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 	opts := options.Update().SetUpsert(true)
 	_, err = collection.UpdateOne(ctx, filter, update, opts)
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"message": "Failed to save user info: Database update failed"})
+		resp.Response = "Failed to save user info: Database update failed"
+		at.WriteJSON(w, http.StatusInternalServerError, resp)
 		return
 	}
 
 	response := map[string]interface{}{
 		"user": userInfo,
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(response)
+	at.WriteJSON(w, http.StatusOK, response)
 }
 
 func GeneratePasswordHandler(respw http.ResponseWriter, r *http.Request) {
