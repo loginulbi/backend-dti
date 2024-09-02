@@ -44,8 +44,8 @@ func AuthUser(c *fiber.Ctx) error {
 		return c.Status(http.StatusUnauthorized).JSON(resp)
 	}
 	userInfo := model.User{
-		Nama:                 payload.Claims["name"].(string),
-		Email:                payload.Claims["email"].(string),
+		Nama:  payload.Claims["name"].(string),
+		Email: payload.Claims["email"].(string),
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
