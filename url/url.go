@@ -19,4 +19,7 @@ func Web(page *fiber.App) {
 	page.Get("/data/karyawan", func(c *fiber.Ctx) error {
 		return controller.GetUserBio(c)
 	})
+	page.Get("/data/tes", func(c *fiber.Ctx) error {
+		return controller.GetAllDataKaryawan(c)
+	})
 }

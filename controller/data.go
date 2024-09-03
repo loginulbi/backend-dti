@@ -47,3 +47,15 @@ func GetUserBio(ctx *fiber.Ctx) error {
 	dockaryawan.Nama = payload.Alias
 	return ctx.Status(fiber.StatusOK).JSON(dockaryawan)
 }
+
+func GetAllDataKaryawan(ctx *fiber.Ctx) error {
+	var dbname = "hris"
+
+	// Ambil data karyawan dari database
+	docAll, err := atdb.GetAllDoc[model.Karyawan](config.DBPresensi(dbname), "karyawan", bson.M{})
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(err.Error())
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(docAll)
+}

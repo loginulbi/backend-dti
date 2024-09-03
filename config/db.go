@@ -11,7 +11,7 @@ import (
 
 //DB KARYAWAN
 func DBPresensi(dbname string) *mongo.Database {
-	connectionstr := os.Getenv("KARYAWANDATA")
+	connectionstr := os.Getenv("MONGOSTRING")
 	if connectionstr == "" {
 		panic(fmt.Errorf("KARYAWANDATA ENV NOT FOUND"))
 	}
