@@ -20,6 +20,6 @@ var WAAPIGetToken string = "https://api.wa.my.id/api/signup"
 
 var WAAPIGetDevice string = "https://api.wa.my.id/api/device/"
 
-var PublicKeyWhatsAuth string 
+var PublicKeyWhatsAuth string = "47db091df55d64499fdf2ca85504ac4d320c4c645c9bef75efac0494314cae94"
 
 var WAAPIToken string

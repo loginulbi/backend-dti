@@ -17,6 +17,6 @@ func Web(page *fiber.App) {
 
 	page.Post("/auth/users", controller.AuthUser)
 	page.Get("/data/karyawan", func(c *fiber.Ctx) error {
-		return controller.GetUserBio(c, nil)
+		return controller.GetUserBio(c)
 	})
 }

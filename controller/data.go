@@ -6,28 +6,43 @@ import (
 	"login-service/helper/atdb"
 	"login-service/helper/watoken"
 	"login-service/model"
-	"net/http"
 
 	"github.com/gofiber/fiber/v2"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
-func GetUserBio(c *fiber.Ctx, req *http.Request) error {
-	payload, err := watoken.Decode(config.PublicKeyWhatsAuth, at.GetLoginFromHeader(req))
+func GetUserBio(ctx *fiber.Ctx) error {
+	// Ambil login header menggunakan GetLoginFromHeader
+	loginSecret, err := at.GetLoginFromHeader(ctx)
 	if err != nil {
 		var respn model.Response
 		respn.Status = "Error : Token Tidak Valid"
-		respn.Info = at.GetLoginFromHeader(req)
+		respn.Info = err.Error()
+		respn.Location = "Missing or invalid login header"
+		return ctx.Status(fiber.StatusForbidden).JSON(respn)
+	}
+
+	// Decode token menggunakan loginSecret yang didapat dari header
+	payload, err := watoken.Decode(config.PublicKeyWhatsAuth, loginSecret)
+	if err != nil {
+		var respn model.Response
+		respn.Status = "Error : Token Tidak Valid"
+		respn.Info = loginSecret
 		respn.Location = "Decode Token Error"
 		respn.Response = err.Error()
-		return c.Status(http.StatusForbidden).JSON(respn)
+		return ctx.Status(fiber.StatusForbidden).JSON(respn)
 	}
-	dockaryawan, err := atdb.GetOneDoc[model.Karyawan](config.Mongoconn, "karyawan", primitive.M{"nama": payload.Alias})
+
+	// Ambil data karyawan dari database
+	dockaryawan, err := atdb.GetOneDoc[model.Karyawan](config.Mongoconn, "karyawan", bson.M{"nama": payload.Alias})
 	if err != nil {
+		// Jika tidak ditemukan, buat data karyawan baru berdasarkan payload
 		dockaryawan.PhoneNumber = payload.Id
 		dockaryawan.Nama = payload.Alias
-		return c.Status(http.StatusOK).JSON(dockaryawan)
+		return ctx.Status(fiber.StatusOK).JSON(dockaryawan)
 	}
+
+	// Jika ditemukan, kembalikan data karyawan
 	dockaryawan.Nama = payload.Alias
-	return c.Status(http.StatusOK).JSON(dockaryawan)
+	return ctx.Status(fiber.StatusOK).JSON(dockaryawan)
 }

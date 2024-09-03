@@ -2,8 +2,11 @@ package at
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 func GetSecretFromHeader(r *http.Request) (secret string) {
@@ -15,13 +18,19 @@ func GetSecretFromHeader(r *http.Request) (secret string) {
 	return
 }
 
-func GetLoginFromHeader(r *http.Request) (secret string) {
-	if r.Header.Get("login") != "" {
-		secret = r.Header.Get("login")
-	} else if r.Header.Get("Login") != "" {
-		secret = r.Header.Get("Login")
+func GetLoginFromHeader(ctx *fiber.Ctx) (string, error) {
+	if ctx == nil {
+		return "", fmt.Errorf("context is nil")
 	}
-	return
+	login := ctx.Get("login")
+	if login != "" {
+		return login, nil
+	}
+	login = ctx.Get("Login")
+	if login != "" {
+		return login, nil
+	}
+	return "", fmt.Errorf("login header is missing")
 }
 
 func Jsonstr(strc interface{}) string {
