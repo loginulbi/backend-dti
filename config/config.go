@@ -1,18 +1,20 @@
 package config
 
 import (
-	"gocroot/helper"
+	"login-service/helper/at"
+	"os"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-var IPPort, Net = helper.GetAddress()
+var PrivateKey string = os.Getenv("PRKEY")
+var IPPort, Net = at.GetAddress()
 
 var Iteung = fiber.Config{
 	Prefork:       true,
 	CaseSensitive: true,
 	StrictRouting: true,
-	ServerHeader:  "GoCroot",
+	ServerHeader:  "login-service",
 	AppName:       "Golang Change Root",
 	Network:       Net,
 }

@@ -2,7 +2,7 @@
 1. pertama jika ingin tersambung ke server :
    ```sh
    ssh -p 60606 jose@croot.ypbpi.or.id
-   pw : joseganteng123
+   pw : ******
    ```
    ```sh
    jika lokal maka dapat melalui ip:

@@ -3,11 +3,11 @@ package main
 import (
 	"log"
 
-	"gocroot/config"
+	"login-service/config"
 
 	"github.com/gofiber/fiber/v2/middleware/cors"
 
-	"gocroot/url"
+	"login-service/url"
 
 	"github.com/gofiber/fiber/v2"
 )

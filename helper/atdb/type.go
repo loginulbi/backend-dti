@@ -1,4 +1,4 @@
-package model
+package atdb
 
 type DBInfo struct {
 	DBString string
