@@ -12,12 +12,13 @@ import (
 
 func GetRekapPendaftaranUsers(db *mongo.Database) (rkp RekapitulasiUser, err error) {
 	//copy data user
-	users, err := GetAllUser(config.Mongoconn)
+	var dbname = "hris"
+	users, err := GetAllUser(config.DBPresensi(dbname))
 	if err != nil {
 		err = errors.New("GetAllUser:" + err.Error())
 		return
 	}
-	_, err = atdb.InsertManyDocs[User](config.Mongoconn, "lmsusers", users)
+	_, err = atdb.InsertManyDocs[User](config.DBPresensi(dbname), "lmsusers", users)
 	if err != nil {
 		err = errors.New("InsertManyDocs:" + err.Error())
 		return
@@ -27,7 +28,7 @@ func GetRekapPendaftaranUsers(db *mongo.Database) (rkp RekapitulasiUser, err err
 		"profileapproved": 1,
 		"roles":           "User",
 	}
-	count1, err := atdb.GetCountDoc(config.Mongoconn, "lmsusers", filter)
+	count1, err := atdb.GetCountDoc(config.DBPresensi(dbname), "lmsusers", filter)
 	if err != nil {
 		return
 	}
@@ -35,7 +36,7 @@ func GetRekapPendaftaranUsers(db *mongo.Database) (rkp RekapitulasiUser, err err
 		"profileapproved": 2,
 		"roles":           "User",
 	}
-	count2, err := atdb.GetCountDoc(config.Mongoconn, "lmsusers", filter)
+	count2, err := atdb.GetCountDoc(config.DBPresensi(dbname), "lmsusers", filter)
 	if err != nil {
 		return
 	}
@@ -43,7 +44,7 @@ func GetRekapPendaftaranUsers(db *mongo.Database) (rkp RekapitulasiUser, err err
 		"profileapproved": 3,
 		"roles":           "User",
 	}
-	count3, err := atdb.GetCountDoc(config.Mongoconn, "lmsusers", filter)
+	count3, err := atdb.GetCountDoc(config.DBPresensi(dbname), "lmsusers", filter)
 	if err != nil {
 		return
 	}
@@ -51,11 +52,11 @@ func GetRekapPendaftaranUsers(db *mongo.Database) (rkp RekapitulasiUser, err err
 		"profileapproved": 4,
 		"roles":           "User",
 	}
-	count4, err := atdb.GetCountDoc(config.Mongoconn, "lmsusers", filter)
+	count4, err := atdb.GetCountDoc(config.DBPresensi(dbname), "lmsusers", filter)
 	if err != nil {
 		return
 	}
-	count5, err := atdb.GetCountDoc(config.Mongoconn, "lmsusers", bson.M{"roles": "User"})
+	count5, err := atdb.GetCountDoc(config.DBPresensi(dbname), "lmsusers", bson.M{"roles": "User"})
 	if err != nil {
 		return
 	}
@@ -71,7 +72,7 @@ func GetRekapPendaftaranUsers(db *mongo.Database) (rkp RekapitulasiUser, err err
 		Total:               count5,
 	}
 	//drop collection user
-	err = atdb.DropCollection(config.Mongoconn, "lmsusers")
+	err = atdb.DropCollection(config.DBPresensi(dbname), "lmsusers")
 	if err != nil {
 		return
 	}

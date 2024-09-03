@@ -13,6 +13,7 @@ import (
 
 func GetUserBio(ctx *fiber.Ctx) error {
 	// Ambil login header menggunakan GetLoginFromHeader
+	var dbname = "hris"
 	loginSecret, err := at.GetLoginFromHeader(ctx)
 	if err != nil {
 		var respn model.Response
@@ -34,7 +35,7 @@ func GetUserBio(ctx *fiber.Ctx) error {
 	}
 
 	// Ambil data karyawan dari database
-	dockaryawan, err := atdb.GetOneDoc[model.Karyawan](config.Mongoconn, "karyawan", bson.M{"nama": payload.Alias})
+	dockaryawan, err := atdb.GetOneDoc[model.Karyawan](config.DBPresensi(dbname), "karyawan", bson.M{"nama": payload.Alias})
 	if err != nil {
 		// Jika tidak ditemukan, buat data karyawan baru berdasarkan payload
 		dockaryawan.PhoneNumber = payload.Id

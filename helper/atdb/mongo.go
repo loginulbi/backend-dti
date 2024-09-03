@@ -24,6 +24,7 @@ func MongoConnect(mconn DBInfo) (db *mongo.Database, err error) {
 		}
 	}
 	db = client.Database(mconn.DBName)
+	// fmt.Println("connect berhasil")
 	return
 }
 
