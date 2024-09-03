@@ -9,6 +9,7 @@ import (
 func TestDBPresensi(t *testing.T) {
 	// Nama database yang ingin diuji
 	dbname := "hris"
+	//testing
 
 	// Panggil fungsi DBPresensi
 	db := DBPresensi(dbname)
