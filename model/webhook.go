@@ -51,11 +51,11 @@ type Userdomyikado struct {
 }
 
 type User struct {
-	ID          primitive.ObjectID `bson:"_id,omitempty" json:"_id,omitempty"`
-	Nama        string             `bson:"nama,omitempty" json:"nama,omitempty"`
-	PhoneNumber string             `bson:"phone_number,omitempty" json:"phone_number,omitempty"`
-	Email       string             `bson:"email,omitempty" json:"email,omitempty"`
-	Role        string             `bson:"role,omitempty" json:"role,omitempty"`
+    ID          primitive.ObjectID `json:"_id" bson:"_id"`
+    Nama        string             `json:"nama" bson:"nama"`
+    PhoneNumber string             `json:"phone_number" bson:"phone_number"`
+	Email       string             `json:"email" bson:"email"`
+    Role        string             `json:"role" bson:"role"`
 }
 
 type Task struct {

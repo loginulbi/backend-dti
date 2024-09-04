@@ -2,6 +2,8 @@ package controller
 
 import (
 	"context"
+	"fmt"
+
 	// "encoding/json"
 	"net/http"
 	// "net/url"
@@ -17,6 +19,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/bson"
+
 	// "go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	// "golang.org/x/crypto/bcrypt"
@@ -66,9 +69,12 @@ func AuthUser(c *fiber.Ctx) error {
 		resp.Response = "Phone number not found"
 		return c.Status(http.StatusUnauthorized).JSON(response)
 	} else if existingUser.PhoneNumber != "" {
-		token, err := watoken.EncodeforHours(existingUser.PhoneNumber, existingUser.Nama, config.PrivateKey, 18)
+		var PrivateKey = config.PrivateKey
+		fmt.Println(PrivateKey)
+		token, err := watoken.EncodeforHours(existingUser.PhoneNumber, existingUser.Nama, PrivateKey, 18)
 		if err != nil {
 			resp.Response = "Token generation failed"
+			fmt.Println(existingUser.Email + "|" + existingUser.Nama + "|" + existingUser.PhoneNumber + "|" + PrivateKey)
 			return c.Status(http.StatusInternalServerError).JSON(resp)
 		}
 		response := map[string]interface{}{

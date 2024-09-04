@@ -45,6 +45,7 @@ func GetAddress() (ipport string, network string) {
 	return
 }
 
+
 func GetClientIP(r *http.Request) (string, error) {
 	ips := r.Header.Get("X-Forwarded-For")
 	splitIps := strings.Split(ips, ",")

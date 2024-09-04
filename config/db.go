@@ -9,7 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-//DB KARYAWAN
+// DB KARYAWAN
 func DBPresensi(dbname string) *mongo.Database {
 	connectionstr := os.Getenv("MONGOSTRING")
 	if connectionstr == "" {
@@ -22,8 +22,17 @@ func DBPresensi(dbname string) *mongo.Database {
 	return clay.Database(dbname)
 }
 
-
-
+func DBUser(dbname string) *mongo.Database {
+	connectionstr := os.Getenv("MONGOUSER")
+	if connectionstr == "" {
+		panic(fmt.Errorf("KARYAWANDATA ENV NOT FOUND"))
+	}
+	clay, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(connectionstr))
+	if err != nil {
+		panic(fmt.Errorf("MongoConnect: %+v \n", err))
+	}
+	return clay.Database(dbname)
+}
 
 // var MongoString string = os.Getenv("MONGOSTRING")
 
