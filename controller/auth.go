@@ -100,6 +100,7 @@ func AuthUser(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(response)
 }
 
+//test push
 // func GeneratePasswordHandler(respw http.ResponseWriter, r *http.Request) {
 // 	var request struct {
 // 		PhoneNumber string `json:"phonenumber"`
